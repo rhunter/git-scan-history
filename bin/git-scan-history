@@ -1,40 +1,47 @@
 #!/bin/bash
 ###
+#
 # USAGE
+#
 #   git-cloc-ruby-sql-notes <range>
 #
-# Counts the amount of Ruby code for each commit in a range.
-# Stores the results using `git notes` so you can push the results to
-other repositories,
+# Counts the amount of Ruby code for each commit in a range.  Stores the
+# results using `git notes` so you can push the results to other repositories,
 # and the results are kept around for resuming interrupted runs.
 #
+#
 # EXAMPLES
+#
 #   git-cloc-ruby-sql-notes --first-parent HEAD~100...
 #
+#
 # BUGS
-# Written in a textbox for email in a browser, so probably doesn't
-actually work.
+#
+# Written in a textbox for email in a browser, so probably doesn't actually
+# work.
+#
 #
 # AUTHOR
+#
 # Rob Hunter <rhunter@thoughtworks.com> is the dang fool who started
 # reconstructing some analysis he'd done with Flog in a browser email.
 ##
 set -eE
 
-function main {
+function main() {
  local rev
  start_branch=$(git rev-parse --symbolic HEAD)
 
  for rev in $(git rev-list "$@"); do
-   if needs_stats_for_rev $rev; do
+   if needs_stats_for_rev $rev; then
      collect_stats_for_rev $rev
-   done
+   fi
  done
 
  cleanup
 }
 
-function cleanup {
+function cleanup() {
  git checkout $start_branch
 }
 
@@ -53,7 +60,7 @@ function collect_stats_for_rev() {
 --ref=sql-cloc --file=-
 }
 
-function sql_cloc_for_project {
+function sql_cloc_for_project() {
  local project_name="$1"
 
  cloc --sql=- \
@@ -64,6 +71,6 @@ function sql_cloc_for_project {
    .
 }
 
-trap ERR cleanup
-trap INT cleanup
+trap cleanup ERR INT
 main "$@"
+
