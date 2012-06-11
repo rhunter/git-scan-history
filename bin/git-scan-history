@@ -35,7 +35,7 @@ export GIT_NOTES_REF=${GIT_NOTES_REF:-refs/notes/sql-cloc}
 
 function main() {
  local rev
- start_branch=$(git rev-parse --symbolic HEAD)
+ what_was_head=$(git rev-parse HEAD)
 
  for rev in $(git rev-list "$@"); do
    if needs_stats_for_rev $rev; then
@@ -47,7 +47,7 @@ function main() {
 }
 
 function cleanup() {
- git checkout $start_branch
+ git reset --hard ${what_was_head}
 }
 
 function needs_stats_for_rev() {
@@ -59,7 +59,7 @@ function needs_stats_for_rev() {
 function collect_stats_for_rev() {
    local rev=$1
 
-   git checkout $rev
+   git reset --hard $rev
    cloc_project_id="commit $rev"
    sql_cloc_for_project "$cloc_project_id" | git notes add --file=-
 }
