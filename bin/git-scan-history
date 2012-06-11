@@ -48,9 +48,11 @@ function main() {
  git update-ref ORIG_HEAD HEAD
 
  for rev in $(git rev-list "$@"); do
-   if needs_stats_for_rev $rev; then
-     collect_stats_for_rev $rev
+   if ! needs_stats_for_rev $rev; then
+     say "Already collected stats for $rev, skipping..."
+     continue
    fi
+   collect_stats_for_rev $rev
  done
 
  say 'Finished, cleaning up...'
