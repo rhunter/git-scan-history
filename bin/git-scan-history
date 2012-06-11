@@ -67,7 +67,8 @@ function needs_stats_for_rev() {
  local rev=$1
 
  ! git notes list $rev
-} 2>&1 > /dev/null
+} &> /dev/null
+# it's a boolean check function, never needs output
 
 function collect_stats_for_rev() {
    local rev=$1
