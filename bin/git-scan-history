@@ -28,6 +28,11 @@
 ##
 set -eE
 
+
+# this script stores results in `git notes`
+# so that the results can be cached, and pushed to other repositories
+export GIT_NOTES_REF=${GIT_NOTES_REF:-refs/notes/sql-cloc}
+
 function main() {
  local rev
  start_branch=$(git rev-parse --symbolic HEAD)
@@ -56,8 +61,7 @@ function collect_stats_for_rev() {
 
    git checkout $rev
    cloc_project_id="commit $rev"
-   sql_cloc_for_project "$cloc_project_id" | git notes add
---ref=sql-cloc --file=-
+   sql_cloc_for_project "$cloc_project_id" | git notes add --file=-
 }
 
 function sql_cloc_for_project() {
