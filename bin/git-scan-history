@@ -79,6 +79,11 @@ function collect_stats_for_rev() {
    sql_cloc_for_project "$cloc_project_id" | git notes add --file=-
 }
 
+##
+# actually do the collection.
+# expected to act on the working tree, print results to stdout
+#
+# TODO: should almost certainly be user-supplied
 function sql_cloc_for_project() {
  local project_name="$1"
 
