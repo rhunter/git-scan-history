@@ -48,8 +48,8 @@ function cleanup() {
 function needs_stats_for_rev() {
  local rev=$1
 
- ! git notes list $rev 2>&1 > /dev/null
-}
+ ! git notes list $rev
+} 2>&1 > /dev/null
 
 function collect_stats_for_rev() {
    local rev=$1
