@@ -1,33 +1,39 @@
 #!/bin/bash
 ###
 #
-# USAGE
-#
-#   git-cloc-ruby-sql-notes <range>
-#
-# Counts the amount of Ruby code for each commit in a range.  Stores the
-# results using `git notes` so you can push the results to other repositories,
-# and the results are kept around for resuming interrupted runs.
-#
-#
-# EXAMPLES
-#
-#   git-cloc-ruby-sql-notes --first-parent HEAD~100...
-#
-#
-# BUGS
-#
-# Written in a textbox for email in a browser, so probably doesn't actually
-# work.
-#
-#
-# AUTHOR
-#
-# Rob Hunter <rhunter@thoughtworks.com> is the dang fool who started
-# reconstructing some analysis he'd done with Flog in a browser email.
-##
+USAGE="<range>"
+LONG_USAGE=<<EOT
+Counts the amount of Ruby code for each commit in a range.  Stores the
+results using `git notes` so you can push the results to other repositories,
+and the results are kept around for resuming interrupted runs.
+
+
+EXAMPLES
+
+  git-cloc-ruby-sql-notes --first-parent HEAD~100...
+
+
+BUGS
+
+Written in a textbox for email in a browser, so probably doesn't actually
+work.
+
+
+AUTHOR
+
+Rob Hunter <rhunter@thoughtworks.com> is the dang fool who started
+reconstructing some analysis he'd done with Flog in a browser email.
+
+EOT
+
+# avoid silent failures:
+# -e  trigger an error and exit on any command that fails
+# -E  even in a function
 set -eE
 
+
+# the "git library" for shell scripts like this one
+source "$(git --exec-path)/git-sh-setup"
 
 # this script stores results in `git notes`
 # so that the results can be cached, and pushed to other repositories
@@ -35,7 +41,11 @@ export GIT_NOTES_REF=${GIT_NOTES_REF:-refs/notes/sql-cloc}
 
 function main() {
  local rev
- what_was_head=$(git rev-parse HEAD)
+ require_work_tree
+ require_clean_work_tree
+ set_reflog_action
+
+ git update-ref ORIG_HEAD HEAD
 
  for rev in $(git rev-list "$@"); do
    if needs_stats_for_rev $rev; then
@@ -43,11 +53,12 @@ function main() {
    fi
  done
 
+ say 'Finished, cleaning up...'
  cleanup
 }
 
 function cleanup() {
- git reset --hard ${what_was_head}
+ git reset --hard ORIG_HEAD
 }
 
 function needs_stats_for_rev() {
@@ -58,6 +69,7 @@ function needs_stats_for_rev() {
 
 function collect_stats_for_rev() {
    local rev=$1
+   say "Collecting stats for $rev..."
 
    git reset --hard $rev
    cloc_project_id="commit $rev"
@@ -76,7 +88,7 @@ function sql_cloc_for_project() {
 }
 
 function on_error() {
-  echo 'Error, cleaning up...'
+  say 'Error, cleaning up...'
   cleanup
   exit 2
 }
