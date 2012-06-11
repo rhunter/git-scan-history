@@ -71,6 +71,12 @@ function sql_cloc_for_project() {
    .
 }
 
-trap cleanup ERR INT
+function on_error() {
+  echo 'Error, cleaning up...'
+  cleanup
+  exit 2
+}
+
+trap on_error ERR INT
 main "$@"
 
