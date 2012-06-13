@@ -1,28 +1,26 @@
 #!/bin/bash
 ###
 #
-USAGE="<range>"
+USAGE="--run <collection script> [options] <range>"
 LONG_USAGE=<<EOT
-Counts the amount of Ruby code for each commit in a range.  Stores the
+Runs a command for each commit in a range.  Stores the
 results using `git notes` so you can push the results to other repositories,
 and the results are kept around for resuming interrupted runs.
 
+Originally designed for mining data from history, like complexity over time.
 
-EXAMPLES
+ <range> is a range of commits - see git-rev-list(1)
+ Example ranges:
+   HEAD~10..HEAD~5        # relative
+   v1.0..v2.0             # tags
+   cb13a59c5c..95ae35d3   # commit hashes
+   origin/master..master  # branches
 
-  git-cloc-ruby-sql-notes --first-parent HEAD~100...
-
-
-BUGS
-
-Written in a textbox for email in a browser, so probably doesn't actually
-work.
-
-
-AUTHOR
-
-Rob Hunter <rhunter@thoughtworks.com> is the dang fool who started
-reconstructing some analysis he'd done with Flog in a browser email.
+ <collection script> is run for every commit. For example:
+   'cloc .'
+   'echo \$commit_sha1'
+   'du .'
+ It is expected to act on the working tree and print results to stdout.
 
 EOT
 OPTIONS_SPEC="\
@@ -33,6 +31,7 @@ h,help         Help text
 v,verbose      Talk about everything
 q,quiet        Talk about nothing
 notes-ref=     Store results in a particular \`git notes\` namespace
+run=           A command to collect statistics about the commit
 
 "
 OPTIONS_KEEPDASHDASH=
@@ -44,13 +43,14 @@ SUBDIRECTORY_OK=
 # -E  even in a function
 set -eE
 
+collection_script=
 
 # the "git library" for shell scripts like this one
 source "$(git --exec-path)/git-sh-setup"
 
 # this script stores results in `git notes`
 # so that the results can be cached, and pushed to other repositories
-export GIT_NOTES_REF=${GIT_NOTES_REF:-refs/notes/sql-cloc}
+export GIT_NOTES_REF=${GIT_NOTES_REF:-refs/notes/scan-history}
 
 function main() {
  local rev
@@ -74,6 +74,7 @@ function main() {
 
 function cleanup() {
  git reset --hard ORIG_HEAD
+ trap - EXIT
 }
 
 function needs_stats_for_rev() {
@@ -88,24 +89,7 @@ function collect_stats_for_rev() {
    say "Collecting stats for $rev..."
 
    git reset --hard $rev
-   cloc_project_id="commit $rev"
-   sql_cloc_for_project "$cloc_project_id" | git notes add --file=-
-}
-
-##
-# actually do the collection.
-# expected to act on the working tree, print results to stdout
-#
-# TODO: should almost certainly be user-supplied
-function sql_cloc_for_project() {
- local project_name="$1"
-
- cloc --sql=- \
-   --sql-append \
-   --sql-project="$project_name" \
-   --exclude-dir=vendor,tmp \
-   --match-f '\.rb$' \
-   .
+   git notes add --file=<(eval "$collection_script")
 }
 
 function on_error() {
@@ -119,6 +103,10 @@ trap cleanup EXIT
 
 while [[ $# != 0 ]]; do
   case "$1" in
+    --run)
+      collection_script="$2"
+      shift
+      ;;
     --notes-ref)
       GIT_NOTES_REF="$2"
       shift
@@ -136,6 +124,12 @@ while [[ $# != 0 ]]; do
   esac
   shift
 done
+
+if [[ -z ${collection_script} ]]; then
+  die "Please provide a command to run. For example:
+    --run 'echo Commit \$commit_sha1 has \$(wc -l README) lines in the README'
+  "
+fi
 
 main "$@"
 
