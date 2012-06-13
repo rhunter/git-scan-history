@@ -31,6 +31,7 @@ h,help         Help text
 v,verbose      Talk about everything
 q,quiet        Talk about nothing
 notes-ref=     Store results in a particular \`git notes\` namespace
+sample-every=  Only look at 1 in every n commits (useful for scanning big repos)
 run=           A command to collect statistics about the commit
 
 "
@@ -44,6 +45,7 @@ SUBDIRECTORY_OK=
 set -eE
 
 collection_script=
+sample_one_in_every_n_commits=1
 
 # the "git library" for shell scripts like this one
 source "$(git --exec-path)/git-sh-setup"
@@ -60,7 +62,7 @@ function main() {
 
  git update-ref ORIG_HEAD HEAD
 
- for rev in $(git rev-list "$@"); do
+ for rev in $(git rev-list "$@" | every_nth_entry $sample_one_in_every_n_commits); do
    if ! needs_stats_for_rev $rev; then
      say "Already collected stats for $rev, skipping..."
      continue
@@ -75,6 +77,10 @@ function main() {
 function cleanup() {
  git reset --hard ORIG_HEAD
  trap - EXIT
+}
+
+function every_nth_entry() {
+  awk -v n="$1" '!((NR-1) % n)'
 }
 
 function needs_stats_for_rev() {
@@ -105,6 +111,10 @@ while [[ $# != 0 ]]; do
   case "$1" in
     --run)
       collection_script="$2"
+      shift
+      ;;
+    --sample-every)
+      sample_one_in_every_n_commits="$2"
       shift
       ;;
     --notes-ref)

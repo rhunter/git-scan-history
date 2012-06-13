@@ -48,7 +48,7 @@ directly:
 
 EXAMPLES
 
-  git scan-history --script 'cloc .' --first-parent HEAD~100...
+  git scan-history --script 'cloc .' --sample-every 5 --first-parent HEAD~100...
 
 
 
