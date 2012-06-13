@@ -54,6 +54,8 @@ EXAMPLES
 
 FUTURE PLANS
 
+Choosing a notes-ref automatically would be nice.
+
 For big codebases where you just want a quick taste of the full stats,
 it'd be nice if git-scan-history was clever about the order it
 gathered.  Instead of collecting stats in a strictly linear fashion,
