@@ -25,6 +25,19 @@ Rob Hunter <rhunter@thoughtworks.com> is the dang fool who started
 reconstructing some analysis he'd done with Flog in a browser email.
 
 EOT
+OPTIONS_SPEC="\
+git-scan-history [options] --run=<collection script> <range>
+--
+ Available options are
+h,help         Help text
+v,verbose      Talk about everything
+q,quiet        Talk about nothing
+notes-ref=     Store results in a particular \`git notes\` namespace
+
+"
+OPTIONS_KEEPDASHDASH=
+NONGIT_OK=
+SUBDIRECTORY_OK=
 
 # avoid silent failures:
 # -e  trigger an error and exit on any command that fails
@@ -102,5 +115,27 @@ function on_error() {
 }
 
 trap on_error ERR INT
+trap cleanup EXIT
+
+while [[ $# != 0 ]]; do
+  case "$1" in
+    --notes-ref)
+      GIT_NOTES_REF="$2"
+      shift
+      ;;
+    -v) #verbose
+      GIT_QUIET=
+      ;;
+    -q) #quiet
+      GIT_QUIET=t
+      ;;
+    --)
+      shift
+      break
+      ;;
+  esac
+  shift
+done
+
 main "$@"
 
