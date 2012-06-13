@@ -42,7 +42,9 @@ SUBDIRECTORY_OK=
 # avoid silent failures:
 # -e  trigger an error and exit on any command that fails
 # -E  even in a function
-set -eE
+# -u  trigger an error when dereferencing an undeclared variable
+set -eEu
+
 
 collection_script=
 sample_one_in_every_n_commits=1
